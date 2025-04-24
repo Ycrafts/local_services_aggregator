@@ -1,0 +1,48 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
+
+class AuthController extends Controller
+{
+    public function register(Request $request)
+    {
+        $fields = $request->validate([
+            'name'=>'required|max:255',
+            'email'=>'email|unique:users',
+            'phone_number'=>'required|unique:users',
+            'password'=>'required|confirmed'
+        ]);
+        $user = User::create($fields);
+        
+        return response()->json([
+            'message'=>'Successfully Registered',
+        ],200);
+    }
+
+    public function login(Request $request){
+        $request->validate([
+            'phone_number'=>'required',
+            'password' => 'required'
+        ]);
+
+        $user = User::where('phone_number', $request->phone_number)->first();
+
+        if(!$user || !Hash::check($request->password,$user->password)){
+            return response()->json([
+                'message'=>'Unknown phone number or wrong password',
+            ],403);
+        }
+
+        $token = $user->createToken($user->id);
+
+        return [
+            'user'=>$user,
+            'token'=>$token->plainTextToken
+        ];
+    }
+}
