@@ -1,0 +1,1 @@
+price is set by the customer when posting the job but the platform suggests approximate price
