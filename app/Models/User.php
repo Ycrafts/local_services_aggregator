@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 
+
 class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasApiTokens;
@@ -62,5 +63,4 @@ class User extends Authenticatable
     {
         return $query->where('role', 'provider');
     }
-
 }

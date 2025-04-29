@@ -71,5 +71,44 @@ class JobController extends Controller
 
         return response()->json($job);
     }
+
+    public function expressInterest(Request $request, $jobId)
+    {
+        $providerProfile = $request->user()->providerProfile;
+
+        if (!$providerProfile) {
+            return response()->json(['message' => 'Provider profile not found.'], 404);
+        }
+
+        $requestedJob = RequestedJob::where('job_id', $jobId)
+            ->where('provider_profile_id', $providerProfile->id)
+            ->first();
+
+        if (!$requestedJob) {
+            return response()->json(['message' => 'Job not found or not assigned to this provider.'], 404);
+        }
+
+        $requestedJob->update(['is_interested' => true]);
+
+        return response()->json(['message' => 'Interest expressed successfully.']);
+    }
+
+    public function interestedProviders($jobId)
+    {
+        $job = Job::findOrFail($jobId);
+
+        // Optionally: check that the user owns the job
+        // if (auth()->id() !== $job->user_id) {
+        //     return response()->json(['message' => 'Unauthorized'], 403);
+        // }
+
+        $interestedProviders = RequestedJob::with('providerProfile.user') // eager load provider and user
+            ->where('job_id', $job->id)
+            ->where('is_interested', true)
+            ->get();
+
+        return response()->json($interestedProviders);
+    }
+
 }
 

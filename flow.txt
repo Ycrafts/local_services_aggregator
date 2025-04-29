@@ -1,0 +1,5 @@
+here is the flow for the local_services_aggregator api
+1. Customer posts a job with the type of job it is.(job types have table of their own) 
+2. System notifies the best fits (matching the job type id from the customers skill filled out in the pivot table provider_profile_job_type table)(many to many jobs_types to provider_profile
+3. Providers express interest. (updating the is_interested field in the requested_jobs table to true from the default false)
+4. Customer selects from the interested providers

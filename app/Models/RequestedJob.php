@@ -14,4 +14,12 @@ class RequestedJob extends Model
         'provider_profile_id',
         'is_interested',
     ];
+
+    // RequestedJob.php
+
+    public function providerProfile()
+    {
+        return $this->belongsTo(ProviderProfile::class, 'provider_profile_id');
+    }
+
 }

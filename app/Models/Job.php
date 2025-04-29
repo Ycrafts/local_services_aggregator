@@ -18,7 +18,7 @@ class Job extends Model
 
     // Fillable attributes for mass assignment
     protected $fillable = [
-        'id',
+        // 'id',
         'user_id',
         'job_type_id',
         'description',

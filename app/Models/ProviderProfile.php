@@ -41,4 +41,9 @@ class ProviderProfile extends Model
                     ->withTimestamps();
     }
 
+    // ProviderProfile model
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
