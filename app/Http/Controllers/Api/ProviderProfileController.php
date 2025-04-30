@@ -63,6 +63,8 @@ class ProviderProfileController extends Controller
             'rating' => 'nullable|numeric',
             'bio' => 'required|string',
             'location' => 'required|string',
+            'job_type_ids' => 'nullable|array',
+            'job_type_ids.*' => 'integer|exists:job_types,id',
         ]);
 
         // Get the existing profile for the current user
@@ -71,12 +73,22 @@ class ProviderProfileController extends Controller
         if (!$profile) {
             return response()->json([
                 'message' => 'No provider profile found.',
-            ], 404); // Return 404 if no profile is found for the user
+            ], 404);
         }
 
-        // Update the profile with the validated data
+        // Update the profile fields
         $profile->update($validated);
 
-        return response()->json($profile); // Return the updated profile
+        // Sync job types if provided
+        if ($request->has('job_type_ids')) {
+            $profile->jobTypes()->sync($request->job_type_ids);
+        }
+
+        // Return updated profile with job types
+        return response()->json([
+            'profile' => $profile->load('jobTypes'),
+            'message' => 'Profile updated successfully.',
+        ]);
     }
+    
 }

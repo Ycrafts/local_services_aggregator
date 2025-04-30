@@ -37,3 +37,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware('auth:sanctum')->post('/jobs/{jobId}/express-interest', [JobController::class, 'expressInterest']);
 Route::get('/jobs/{job}/interested-providers', [JobController::class, 'interestedProviders'])->middleware('auth:sanctum');
+Route::post('/jobs/{job}/select-provider', [JobController::class, 'selectProvider'])->middleware('auth:sanctum');
+Route::get('/requested-jobs', [JobController::class, 'providerRequestedJobs'])->middleware('auth:sanctum');

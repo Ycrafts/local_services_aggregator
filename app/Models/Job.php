@@ -51,4 +51,11 @@ class Job extends Model
                     ->withTimestamps();
     }
 
+        // Job.php
+    public function assignedProvider()
+    {
+        return $this->belongsTo(ProviderProfile::class, 'assigned_provider_id');
+    }
+
+
 }

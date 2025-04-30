@@ -7,6 +7,8 @@ use App\Models\Job;
 use App\Models\RequestedJob;
 use App\Models\ProviderProfile;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule; 
+use Illuminate\Support\Facades\Log;
 
 use Illuminate\Support\Facades\Auth;
 
@@ -110,5 +112,61 @@ class JobController extends Controller
         return response()->json($interestedProviders);
     }
 
+    public function selectProvider(Request $request, $jobId)
+    {
+        $job = Job::findOrFail($jobId);
+
+        if (!$request->user()) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        if ($request->user()->id !== $job->user_id) {
+            return response()->json(['message' => 'Unauthorized: You are not the job owner.'], 403);
+        }
+
+        $validated = $request->validate([
+            'provider_profile_id' => [
+                'required',
+                'exists:provider_profiles,id',
+                Rule::exists('requested_jobs', 'provider_profile_id')
+                    ->where('job_id', $job->id)
+                    ->where('is_interested', true),
+            ],
+        ]);
+
+        $providerProfileId = $validated['provider_profile_id'];
+
+        // Confirm profile exists (debugging help)
+        $profile = ProviderProfile::find($providerProfileId);
+        if (!$profile) {
+            Log::warning("ProviderProfile not found with ID {$providerProfileId}");
+            return response()->json(['message' => 'Provider profile not found in DB.'], 404);
+        }
+
+        $job->assigned_provider_id = $providerProfileId;
+        $job->status = 'assigned';
+        $job->save();
+
+        RequestedJob::where('job_id', $job->id)
+            ->where('provider_profile_id', $providerProfileId)
+            ->update(['is_selected' => true]);
+
+        return response()->json([
+            'message' => 'Provider selected successfully.',
+            'job' => $job->load('assignedProvider.user'),
+        ]);
+    }
+
+    public function providerRequestedJobs(Request $request){
+        $providerProfile = ProviderProfile::where('user_id', Auth::id())->first();
+        if (!$providerProfile) {
+            // Handle the case where the user has no provider profile
+            return response()->json(['message' => 'Provider profile not found.'], 404);
+        }
+
+        $jobs = RequestedJob::where('provider_profile_id', $providerProfile->id)->get();
+
+        return response()->json($jobs);
+    }
 }
 

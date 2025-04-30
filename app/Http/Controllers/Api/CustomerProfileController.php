@@ -21,8 +21,6 @@ class CustomerProfileController extends Controller
         return response()->json([
             'message'=>'Successfully Created your profile',
         ],200);
-
-
     }
 }
 

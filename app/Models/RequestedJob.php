@@ -21,5 +21,4 @@ class RequestedJob extends Model
     {
         return $this->belongsTo(ProviderProfile::class, 'provider_profile_id');
     }
-
 }
