@@ -99,7 +99,6 @@ class JobController extends Controller
     {
         $job = Job::findOrFail($jobId);
 
-        // Optionally: check that the user owns the job
         // if (auth()->id() !== $job->user_id) {
         //     return response()->json(['message' => 'Unauthorized'], 403);
         // }
@@ -157,16 +156,23 @@ class JobController extends Controller
         ]);
     }
 
-    public function providerRequestedJobs(Request $request){
+    public function providerRequestedJobs(Request $request)
+    {
         $providerProfile = ProviderProfile::where('user_id', Auth::id())->first();
+
         if (!$providerProfile) {
-            // Handle the case where the user has no provider profile
             return response()->json(['message' => 'Provider profile not found.'], 404);
         }
 
-        $jobs = RequestedJob::where('provider_profile_id', $providerProfile->id)->get();
+        $jobs = RequestedJob::where('provider_profile_id', $providerProfile->id)
+            ->whereHas('job', function ($query) {
+                $query->where('status', 'open');
+            })
+            ->with('job') 
+            ->get();
 
         return response()->json($jobs);
     }
+
 }
 

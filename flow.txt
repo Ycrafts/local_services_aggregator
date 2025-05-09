@@ -3,3 +3,11 @@ here is the flow for the local_services_aggregator api
 2. System notifies the best fits (matching the job type id from the customers skill filled out in the pivot table provider_profile_job_type table)(many to many jobs_types to provider_profile
 3. Providers express interest. (updating the is_interested field in the requested_jobs table to true from the default false)
 4. Customer selects from the interested providers
+
+Fixes:
+The status tracking and signal system has to be done all over again has too much mess. Needs to be centralized.
+
+Other functionalities:
+Notifications when a job is found for the provider.
+Notifications for a customer when a job is accepted
+Rating System when a job is completed.(A job is marked as completed either when a customer confirms or it has been 24 hours since the completion of it as reported by the provider.)
