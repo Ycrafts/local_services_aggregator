@@ -13,6 +13,8 @@ class RequestedJob extends Model
         'job_id',
         'provider_profile_id',
         'is_interested',
+        'status',
+        'is_selected'
     ];
 
     // RequestedJob.php

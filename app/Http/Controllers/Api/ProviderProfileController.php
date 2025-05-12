@@ -90,5 +90,28 @@ class ProviderProfileController extends Controller
             'message' => 'Profile updated successfully.',
         ]);
     }
-    
+
+    /**
+     * Update provider payout details
+     */
+    public function updatePayoutDetails(Request $request)
+    {
+        $user = $request->user();
+        if ($user->role !== 'provider') {
+            return response()->json(['message' => 'Only providers can update payout details.'], 403);
+        }
+
+        $request->validate([
+            'bank_account_number' => 'required|string',
+            'bank_code' => 'required|string',
+            'bank_name' => 'required|string',
+        ]);
+
+        $user->bank_account_number = $request->bank_account_number;
+        $user->bank_code = $request->bank_code;
+        $user->bank_name = $request->bank_name;
+        $user->save();
+
+        return response()->json(['message' => 'Bank details updated successfully.']);
+    }
 }

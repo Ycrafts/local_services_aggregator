@@ -14,8 +14,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // $this->call(JobTypeSeeder::class);
-            $this->call(ProviderProfileJobTypeSeeder::class);
-        // User::factory(10)->create();
+            // $this->call(ProviderProfileJobTypeSeeder::class);
+        User::factory(10)->create();
 
         User::factory()->create([
             'name' => 'Test User',

@@ -10,8 +10,8 @@ class ProviderProfileJobTypeSeeder extends Seeder
 {
     public function run()
     {
-        $provider1 = ProviderProfile::find(10);
-        $provider2 = ProviderProfile::find(11);
+        $provider1 = ProviderProfile::find(2);
+        $provider2 = ProviderProfile::find(3);
 
         $jobTypePlumbing = JobType::find(4);
         $jobTypeElectrical = JobType::find(5);

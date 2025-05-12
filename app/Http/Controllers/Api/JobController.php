@@ -11,6 +11,9 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 
 use Illuminate\Support\Facades\Auth;
+use App\Services\JobStatusService;
+use App\Services\RequestedJobStatusService;
+use App\Models\Notification;
 
 
 class JobController extends Controller
@@ -43,8 +46,16 @@ class JobController extends Controller
             RequestedJob::create([
                 'job_id' => $job->id,
                 'provider_profile_id' => $provider->id,
+                'status' => 'pending'
             ]);
-            // Optional: send notification to provider (email, SMS, etc.)
+            // Create in-app notification for provider
+            Notification::create([
+                'user_id' => $provider->user_id,
+                'job_id' => $job->id,
+                'type' => 'new_job',
+                'message' => 'A new job matching your skills has been posted.',
+            ]);
+            // Optional: send SMS notification here later
         }
     
         return response()->json([
@@ -90,7 +101,25 @@ class JobController extends Controller
             return response()->json(['message' => 'Job not found or not assigned to this provider.'], 404);
         }
 
-        $requestedJob->update(['is_interested' => true]);
+        // Use RequestedJobStatusService to transition the status
+        if (!RequestedJobStatusService::transition($requestedJob, RequestedJobStatusService::STATUS_INTERESTED)) {
+            return response()->json(['message' => 'Invalid status transition.'], 400);
+        }
+
+        // Set is_interested to true
+        $requestedJob->is_interested = true;
+        $requestedJob->save();
+
+        // Notify the customer that a provider is interested
+        $job = $requestedJob->job;
+        if ($job && $job->user_id) {
+            Notification::create([
+                'user_id' => $job->user_id,
+                'job_id' => $job->id,
+                'type' => 'provider_interested',
+                'message' => 'A provider has expressed interest in your job.',
+            ]);
+        }
 
         return response()->json(['message' => 'Interest expressed successfully.']);
     }
@@ -143,16 +172,34 @@ class JobController extends Controller
         }
 
         $job->assigned_provider_id = $providerProfileId;
-        $job->status = 'assigned';
-        $job->save();
+        // Use JobStatusService to transition the job status
+        if (!JobStatusService::transition($job, JobStatusService::STATUS_ASSIGNED)) {
+            return response()->json(['message' => 'Invalid status transition.'], 400);
+        }
 
         RequestedJob::where('job_id', $job->id)
             ->where('provider_profile_id', $providerProfileId)
-            ->update(['is_selected' => true]);
+            ->update(['status' => RequestedJobStatusService::STATUS_SELECTED]);
+
+        // Notify the selected provider
+        Notification::create([
+            'user_id' => $profile->user_id,
+            'job_id' => $job->id,
+            'type' => 'job_selected',
+            'message' => 'You have been selected for a job!',
+        ]);
+
+        // Notify the customer that a provider has been assigned
+        Notification::create([
+            'user_id' => $job->user_id,
+            'job_id' => $job->id,
+            'type' => 'provider_assigned',
+            'message' => 'A provider has been assigned to your job.',
+        ]);
 
         return response()->json([
             'message' => 'Provider selected successfully.',
-            'job' => $job->load('assignedProvider.user'),
+            'job' => $job->load('assignedProvider.user')
         ]);
     }
 
@@ -172,6 +219,120 @@ class JobController extends Controller
             ->get();
 
         return response()->json($jobs);
+    }
+
+    public function rateProvider(Request $request, $jobId)
+    {
+        $user = $request->user();
+        $job = Job::findOrFail($jobId);
+
+        // Only the customer who owns the job can rate
+        if ($user->id !== $job->user_id || $user->role !== 'customer') {
+            return response()->json(['message' => 'Only the customer who owns this job can rate the provider.'], 403);
+        }
+
+        // Job must be completed
+        if ($job->status !== 'completed') {
+            return response()->json(['message' => 'You can only rate after the job is completed.'], 400);
+        }
+
+        // Job must have an assigned provider
+        if (!$job->assigned_provider_id) {
+            return response()->json(['message' => 'No provider assigned to this job.'], 400);
+        }
+
+        // Check if already rated
+        $existing = \App\Models\Rating::where('job_id', $job->id)
+            ->where('customer_id', $user->id)
+            ->first();
+        if ($existing) {
+            return response()->json(['message' => 'You have already rated this provider for this job.'], 400);
+        }
+
+        $validated = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        $providerProfileId = $job->assigned_provider_id;
+
+        // Save the rating
+        $rating = \App\Models\Rating::create([
+            'job_id' => $job->id,
+            'provider_profile_id' => $providerProfileId,
+            'customer_id' => $user->id,
+            'rating' => $validated['rating'],
+            'comment' => $validated['comment'] ?? null,
+        ]);
+
+        // Recalculate and update provider's average rating
+        $provider = \App\Models\ProviderProfile::find($providerProfileId);
+        $avg = \App\Models\Rating::where('provider_profile_id', $providerProfileId)->avg('rating');
+        $provider->rating = $avg;
+        $provider->save();
+
+        return response()->json([
+            'message' => 'Rating submitted successfully.',
+            'rating' => $rating
+        ], 201);
+    }
+
+    public function providerMarkDone(Request $request, $jobId)
+    {
+        $user = $request->user();
+        $job = Job::findOrFail($jobId);
+
+        // Only assigned provider can mark as done
+        if ($user->role !== 'provider' || !$job->assigned_provider_id || $job->assigned_provider_id != $user->providerProfile->id) {
+            return response()->json(['message' => 'Only the assigned provider can mark this job as done.'], 403);
+        }
+
+        // Job must be in progress or assigned
+        if (!in_array($job->status, ['assigned', 'in_progress'])) {
+            return response()->json(['message' => 'Job is not in a state that can be marked as done.'], 400);
+        }
+
+        $job->provider_marked_done_at = now();
+        $job->status = 'in_progress'; // Optionally move to in_progress if not already
+        $job->save();
+
+        // Notify customer (optional)
+        Notification::create([
+            'user_id' => $job->user_id,
+            'job_id' => $job->id,
+            'type' => 'status_change',
+            'message' => 'Provider has marked the job as done. Please confirm completion.',
+        ]);
+
+        return response()->json(['message' => 'Job marked as done. Awaiting customer confirmation.']);
+    }
+
+    public function customerConfirmComplete(Request $request, $jobId)
+    {
+        $user = $request->user();
+        $job = Job::findOrFail($jobId);
+
+        // Only the customer who owns the job can confirm
+        if ($user->role !== 'customer' || $user->id != $job->user_id) {
+            return response()->json(['message' => 'Only the customer can confirm completion.'], 403);
+        }
+
+        // Job must have been marked as done by provider
+        if (!$job->provider_marked_done_at) {
+            return response()->json(['message' => 'Provider has not marked this job as done yet.'], 400);
+        }
+
+        // Job must not already be completed
+        if ($job->status === 'completed') {
+            return response()->json(['message' => 'Job is already completed.'], 400);
+        }
+
+        // Use JobStatusService to transition to completed
+        if (!JobStatusService::transition($job, JobStatusService::STATUS_COMPLETED)) {
+            return response()->json(['message' => 'Invalid status transition.'], 400);
+        }
+
+        return response()->json(['message' => 'Job marked as completed successfully.']);
     }
 
 }
