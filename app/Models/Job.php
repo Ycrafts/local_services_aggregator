@@ -22,7 +22,7 @@ class Job extends Model
         'user_id',
         'job_type_id',
         'description',
-        'proposed_price',
+        'estimated_cost',
         'status'
     ];
 

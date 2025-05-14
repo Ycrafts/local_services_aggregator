@@ -23,7 +23,7 @@ class JobController extends Controller
         $validated = $request->validate([
             'job_type_id'     => 'required|exists:job_types,id',
             'description'     => 'required|string',
-            'proposed_price'  => 'required|numeric|min:1',
+            'estimated_cost'  => 'required|numeric|min:1',
         ]);
 
         if ($request->user()->role !== 'customer') {
@@ -34,7 +34,7 @@ class JobController extends Controller
             'user_id'        => $request->user()->id,
             'job_type_id'    => $validated['job_type_id'],
             'description'    => $validated['description'],
-            'proposed_price' => $validated['proposed_price'],
+            'estimated_cost' => $validated['estimated_cost'],
             'status'         => 'open',
         ]);
 
@@ -199,7 +199,7 @@ class JobController extends Controller
 
         return response()->json([
             'message' => 'Provider selected successfully.',
-            'job' => $job->load('assignedProvider.user')
+            'job' => $job->load('assignedProvider.user'),
         ]);
     }
 
@@ -332,7 +332,7 @@ class JobController extends Controller
             return response()->json(['message' => 'Invalid status transition.'], 400);
         }
 
-        return response()->json(['message' => 'Job marked as completed successfully.']);
+        return response()->json(['message' => 'Job marked as completed.']);
     }
 
 }

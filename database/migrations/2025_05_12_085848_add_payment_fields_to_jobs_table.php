@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('jobs', function (Blueprint $table) {
-            $table->string('payment_status')->default('pending')->after('provider_marked_done_at');
-            $table->string('payment_reference')->nullable()->after('payment_status');
+            //
         });
     }
 
@@ -23,8 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('jobs', function (Blueprint $table) {
-            $table->dropColumn('payment_status');
-            $table->dropColumn('payment_reference');
+            //
         });
     }
 };

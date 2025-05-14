@@ -13,7 +13,8 @@ return new class extends Migration
             $table->foreignUuid('user_id')->constrained()->onDelete('cascade'); // only customers
             $table->foreignId('job_type_id')->constrained()->onDelete('cascade');
             $table->text('description');
-            $table->decimal('proposed_price', 8, 2); // set by customer
+            $table->decimal('estimated_cost', 8, 2); // renamed from proposed_price, for reference only
+            $table->foreignId('assigned_provider_id')->nullable()->constrained('provider_profiles')->onDelete('set null');
             $table->enum('status', ['open', 'in_progress', 'completed', 'cancelled'])->default('open');
             $table->timestamps();
         });        
