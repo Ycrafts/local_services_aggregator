@@ -6,18 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    
-    public function up()
-    {
-        Schema::table('requested_jobs', function (Blueprint $table) {
-            $table->boolean('is_selected')->default(false);
-        });
-    }
-    
-    public function down(): void
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
         Schema::table('requested_jobs', function (Blueprint $table) {
             $table->dropColumn('is_selected');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('requested_jobs', function (Blueprint $table) {
+            $table->boolean('is_selected')->default(false);
         });
     }
 };

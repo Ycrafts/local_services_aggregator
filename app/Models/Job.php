@@ -13,12 +13,9 @@ class Job extends Model
 {
     use HasFactory;
 
-    // Table associated with the model
     protected $table = 'jobs';
 
-    // Fillable attributes for mass assignment
     protected $fillable = [
-        // 'id',
         'user_id',
         'job_type_id',
         'description',
@@ -26,19 +23,16 @@ class Job extends Model
         'status'
     ];
 
-    // Relationship: A job belongs to a customer (user)
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Relationship: A job belongs to a job type
     public function jobType()
     {
         return $this->belongsTo(JobType::class);
     }
 
-    // Relationship: A job can be assigned to a provider profile
     public function providerProfile()
     {
         return $this->belongsTo(ProviderProfile::class);
@@ -51,11 +45,8 @@ class Job extends Model
                     ->withTimestamps();
     }
 
-        // Job.php
     public function assignedProvider()
     {
         return $this->belongsTo(ProviderProfile::class, 'assigned_provider_id');
     }
-
-
 }

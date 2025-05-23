@@ -9,10 +9,8 @@ class ProviderProfile extends Model
 {
     use HasFactory;
 
-    // Table associated with the model
     protected $table = 'provider_profiles';
 
-    // Fillable attributes for mass assignment
     protected $fillable = [
         'user_id',
         'skills',
@@ -22,13 +20,11 @@ class ProviderProfile extends Model
         'location'
     ];
 
-    // Relationship: A provider profile can have many job types
     public function jobTypes()
     {
         return $this->belongsToMany(JobType::class, 'provider_profile_job_type');
     }
 
-    // Relationship: A provider can have many jobs they are assigned to
     public function jobs()
     {
         return $this->hasMany(Job::class);
@@ -41,7 +37,6 @@ class ProviderProfile extends Model
                     ->withTimestamps();
     }
 
-    // ProviderProfile model
     public function user()
     {
         return $this->belongsTo(User::class);

@@ -4,9 +4,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\JobController; // Add the JobController import
+use App\Http\Controllers\Api\JobTypeController;
 // use App\Http\Controllers\JobTypeController;
 use App\Http\Controllers\Api\ProviderProfileController;
 use App\Http\Controllers\Api\NotificationsController;
+use App\Http\Controllers\Api\CustomerProfileController;
 
 
 // Authentication Routes
@@ -14,6 +16,8 @@ Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
 Route::post('auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
+// Job Type Routes
+Route::get('job-types', [JobTypeController::class, 'index']);
 
 // Job Routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -50,3 +54,10 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->post('/jobs/{job}/rate-provider', [JobController::class, 'rateProvider']);
 Route::middleware('auth:sanctum')->post('/jobs/{job}/provider-done', [JobController::class, 'providerMarkDone']);
 Route::middleware('auth:sanctum')->post('/jobs/{job}/complete', [JobController::class, 'customerConfirmComplete']);
+
+// Customer Profile Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/customer-profile', [CustomerProfileController::class, 'show']);
+    Route::post('/customer-profile', [CustomerProfileController::class, 'store']);
+    Route::put('/customer-profile', [CustomerProfileController::class, 'update']);
+});

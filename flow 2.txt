@@ -1,0 +1,15 @@
+provider_profile_job_type table is a pivot table that has many to many relation with the table 
+
+the requested_jobs table has the status of "pending","interested","selected"
+
+jobs table has the status of "open","in_progress","completed"
+
+flow:
+Customer creates job
+System finds matches and informs(requested jobs table)
+Providers that have been matched express interest
+Customer chooses the one they want
+Job status changed from open to in progress
+Provider marks as complete
+Customer confirms the completion
+Customer rates and average rating is calculated and rating is updated

@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::create('job_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // "AC Repair", "Plumbing"
+            $table->string('name')->unique(); // "electrician", "plumbing"
             $table->decimal('baseline_price', 8, 2);
             $table->timestamps();
         });

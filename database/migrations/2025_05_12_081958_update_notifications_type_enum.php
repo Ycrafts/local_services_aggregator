@@ -12,10 +12,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Drop the existing enum constraint
         DB::statement('ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_type_check');
 
-        // Add the updated enum constraint with all notification types
         DB::statement("ALTER TABLE notifications ADD CONSTRAINT notifications_type_check 
             CHECK (type IN ('new_job', 'job_selected', 'status_change', 'provider_interested', 'provider_assigned'))");
     }
@@ -25,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Revert to the original enum constraint
+        
         DB::statement('ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_type_check');
         DB::statement("ALTER TABLE notifications ADD CONSTRAINT notifications_type_check 
             CHECK (type IN ('new_job', 'job_selected', 'status_change'))");
